@@ -20,11 +20,15 @@ export default function HomeScreen() {
   // -------------------------------
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
+  const [note, setNote] = useState("");                 // 🆕 optional note
+  const [date, setDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );                                                   // 🆕 date
   const [expenses, setExpenses] = useState([]);
-  const [editingId, setEditingId] = useState(null); // 🔥 Edit mode tracker
+  const [editingId, setEditingId] = useState(null);
 
   // -------------------------------
-  // LOAD DATA FROM STORAGE
+  // LOAD DATA
   // -------------------------------
   useEffect(() => {
     loadExpenses();
@@ -33,74 +37,72 @@ export default function HomeScreen() {
   const loadExpenses = async () => {
     try {
       const data = await AsyncStorage.getItem("expenses");
-
-      if (data !== null) {
-        setExpenses(JSON.parse(data));
-      }
+      if (data !== null) setExpenses(JSON.parse(data));
     } catch (error) {
-      console.log("Error loading data:", error);
+      console.log("Error loading:", error);
     }
   };
 
   // -------------------------------
-  // AUTO SAVE TO STORAGE
+  // SAVE DATA
   // -------------------------------
   useEffect(() => {
     AsyncStorage.setItem("expenses", JSON.stringify(expenses));
   }, [expenses]);
 
   // -------------------------------
-  // ADD / EDIT EXPENSE
+  // ADD / EDIT
   // -------------------------------
   const addExpense = () => {
 
-    // Validation
     if (!amount || !category) {
-      Alert.alert("Error", "Please enter all fields");
+      Alert.alert("Error", "Fill all required fields");
       return;
     }
 
     if (isNaN(amount)) {
-      Alert.alert("Error", "Amount must be a number");
+      Alert.alert("Error", "Amount must be number");
       return;
     }
 
     if (editingId) {
-      // ✏️ EDIT MODE
-      const updatedExpenses = expenses.map(item =>
+      // ✏️ EDIT
+      const updated = expenses.map(item =>
         item.id === editingId
-          ? { ...item, amount: parseFloat(amount), category }
+          ? { ...item, amount: parseFloat(amount), category, note, date }
           : item
       );
-
-      setExpenses(updatedExpenses);
+      setExpenses(updated);
       setEditingId(null);
 
     } else {
-      // ➕ ADD MODE
+      // ➕ ADD
       const newExpense = {
         id: Date.now().toString(),
         amount: parseFloat(amount),
-        category
+        category,
+        note,
+        date
       };
-
       setExpenses([...expenses, newExpense]);
     }
 
     // Clear inputs
     setAmount("");
     setCategory("");
+    setNote("");
+    setDate(new Date().toISOString().split("T")[0]);
   };
 
   // -------------------------------
-  // DELETE EXPENSE
+  // DELETE
   // -------------------------------
   const deleteExpense = (id) => {
     setExpenses(expenses.filter(item => item.id !== id));
   };
 
   // -------------------------------
-  // TOTAL CALCULATION
+  // TOTAL
   // -------------------------------
   const total = expenses.reduce((sum, item) => sum + item.amount, 0);
 
@@ -110,7 +112,6 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
 
-      {/* TITLE */}
       <Text style={styles.title}>💰 Expense Tracker</Text>
 
       {/* INPUT CARD */}
@@ -133,7 +134,22 @@ export default function HomeScreen() {
           placeholderTextColor="#94a3b8"
         />
 
-        {/* Dynamic button */}
+        <TextInput
+          placeholder="Add note (optional)"
+          value={note}
+          onChangeText={setNote}
+          style={styles.input}
+          placeholderTextColor="#94a3b8"
+        />
+
+        <TextInput
+          placeholder="Date (YYYY-MM-DD)"
+          value={date}
+          onChangeText={setDate}
+          style={styles.input}
+          placeholderTextColor="#94a3b8"
+        />
+
         <Button
           title={editingId ? "Update Expense" : "Add Expense"}
           onPress={addExpense}
@@ -144,10 +160,10 @@ export default function HomeScreen() {
       {/* TOTAL */}
       <Text style={styles.total}>Total: ₹{total}</Text>
 
-      {/* EMPTY STATE */}
+      {/* EMPTY */}
       {expenses.length === 0 && (
         <Text style={styles.emptyText}>
-          No expenses yet. Add one 👇
+          No expenses yet 👇
         </Text>
       )}
 
@@ -155,30 +171,33 @@ export default function HomeScreen() {
       <FlatList
         data={expenses}
         keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <View style={styles.itemRow}>
 
-            {/* Expense Info */}
             <View>
               <Text style={styles.amount}>₹{item.amount}</Text>
               <Text style={styles.category}>{item.category}</Text>
+
+              {item.note ? (
+                <Text style={styles.note}>📝 {item.note}</Text>
+              ) : null}
+
+              <Text style={styles.date}>📅 {item.date}</Text>
             </View>
 
-            {/* Action Buttons */}
             <View style={{ flexDirection: "row", gap: 10 }}>
 
-              {/* EDIT */}
               <Button
                 title="✏️"
                 onPress={() => {
                   setAmount(item.amount.toString());
                   setCategory(item.category);
+                  setNote(item.note || "");
+                  setDate(item.date);
                   setEditingId(item.id);
                 }}
               />
 
-              {/* DELETE */}
               <Button
                 title="❌"
                 onPress={() => deleteExpense(item.id)}
@@ -232,20 +251,18 @@ const styles = StyleSheet.create({
     color: "#38bdf8",
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center"
+    textAlign: "center",
+    marginBottom: 10
   },
 
   emptyText: {
     color: "gray",
-    textAlign: "center",
-    marginBottom: 10
+    textAlign: "center"
   },
 
   itemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     backgroundColor: "#1e293b",
     padding: 12,
     borderRadius: 10,
@@ -259,8 +276,17 @@ const styles = StyleSheet.create({
   },
 
   category: {
+    color: "#94a3b8"
+  },
+
+  note: {
+    color: "#cbd5f5",
+    fontSize: 12
+  },
+
+  date: {
     color: "#94a3b8",
-    fontSize: 14
+    fontSize: 12
   }
 
 });
