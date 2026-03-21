@@ -3,21 +3,16 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   FlatList,
   StyleSheet,
-  Alert
+  Alert,
+  TouchableOpacity
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// ================================
-// MAIN COMPONENT
-// ================================
 export default function HomeScreen() {
 
-  // -------------------------------
-  // STATE VARIABLES
-  // -------------------------------
+  // ================= STATE =================
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [note, setNote] = useState("");
@@ -27,41 +22,29 @@ export default function HomeScreen() {
   const [expenses, setExpenses] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
-  // -------------------------------
-  // LOAD DATA
-  // -------------------------------
+  // ================= LOAD =================
   useEffect(() => {
     loadExpenses();
   }, []);
 
   const loadExpenses = async () => {
-    try {
-      const data = await AsyncStorage.getItem("expenses");
-      if (data !== null) setExpenses(JSON.parse(data));
-    } catch (error) {
-      console.log("Error loading:", error);
-    }
+    const data = await AsyncStorage.getItem("expenses");
+    if (data) setExpenses(JSON.parse(data));
   };
 
-  // -------------------------------
-  // SAVE DATA
-  // -------------------------------
+  // ================= SAVE =================
   useEffect(() => {
     AsyncStorage.setItem("expenses", JSON.stringify(expenses));
   }, [expenses]);
 
-  // -------------------------------
-  // CATEGORY SUMMARY LOGIC
-  // -------------------------------
+  // ================= CATEGORY SUMMARY =================
   const categoryTotals = expenses.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = 0;
     acc[item.category] += item.amount;
     return acc;
   }, {});
 
-  // -------------------------------
-  // ADD / EDIT
-  // -------------------------------
+  // ================= ADD / EDIT =================
   const addExpense = () => {
 
     if (!amount || !category) {
@@ -82,7 +65,6 @@ export default function HomeScreen() {
       );
       setExpenses(updated);
       setEditingId(null);
-
     } else {
       const newExpense = {
         id: Date.now().toString(),
@@ -94,27 +76,22 @@ export default function HomeScreen() {
       setExpenses([...expenses, newExpense]);
     }
 
+    // reset
     setAmount("");
     setCategory("");
     setNote("");
     setDate(new Date().toISOString().split("T")[0]);
   };
 
-  // -------------------------------
-  // DELETE
-  // -------------------------------
+  // ================= DELETE =================
   const deleteExpense = (id) => {
     setExpenses(expenses.filter(item => item.id !== id));
   };
 
-  // -------------------------------
-  // TOTAL
-  // -------------------------------
+  // ================= TOTAL =================
   const total = expenses.reduce((sum, item) => sum + item.amount, 0);
 
-  // ================================
-  // UI
-  // ================================
+  // ================= UI =================
   return (
     <View style={styles.container}>
 
@@ -156,10 +133,12 @@ export default function HomeScreen() {
           placeholderTextColor="#94a3b8"
         />
 
-        <Button
-          title={editingId ? "Update Expense" : "Add Expense"}
-          onPress={addExpense}
-        />
+        {/* CUSTOM BUTTON */}
+        <TouchableOpacity style={styles.addBtn} onPress={addExpense}>
+          <Text style={styles.addBtnText}>
+            {editingId ? "UPDATE EXPENSE" : "ADD EXPENSE"}
+          </Text>
+        </TouchableOpacity>
 
       </View>
 
@@ -189,23 +168,24 @@ export default function HomeScreen() {
         data={expenses}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.itemRow}>
+
+          <View style={styles.expenseCard}>
 
             <View>
               <Text style={styles.amount}>₹{item.amount}</Text>
               <Text style={styles.category}>{item.category}</Text>
 
-              {item.note ? (
+              {item.note && (
                 <Text style={styles.note}>📝 {item.note}</Text>
-              ) : null}
+              )}
 
               <Text style={styles.date}>📅 {item.date}</Text>
             </View>
 
-            <View style={{ flexDirection: "row", gap: 10 }}>
+            <View style={styles.actions}>
 
-              <Button
-                title="✏️"
+              <TouchableOpacity
+                style={styles.editBtn}
                 onPress={() => {
                   setAmount(item.amount.toString());
                   setCategory(item.category);
@@ -213,16 +193,21 @@ export default function HomeScreen() {
                   setDate(item.date);
                   setEditingId(item.id);
                 }}
-              />
+              >
+                <Text style={styles.btnText}>✏️</Text>
+              </TouchableOpacity>
 
-              <Button
-                title="❌"
+              <TouchableOpacity
+                style={styles.deleteBtn}
                 onPress={() => deleteExpense(item.id)}
-              />
+              >
+                <Text style={styles.btnText}>❌</Text>
+              </TouchableOpacity>
 
             </View>
 
           </View>
+
         )}
       />
 
@@ -230,15 +215,13 @@ export default function HomeScreen() {
   );
 }
 
-// ================================
-// STYLES
-// ================================
+// ================= STYLES =================
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#0f172a"
+    backgroundColor: "#020617"
   },
 
   title: {
@@ -250,10 +233,12 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: "#1e293b",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 20
+    backgroundColor: "#0f172a",
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#1e293b"
   },
 
   input: {
@@ -264,6 +249,21 @@ const styles = StyleSheet.create({
     color: "white"
   },
 
+  addBtn: {
+    backgroundColor: "#3b82f6",
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10
+  },
+
+  addBtnText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+    letterSpacing: 1
+  },
+
   total: {
     color: "#38bdf8",
     fontSize: 20,
@@ -272,18 +272,55 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
 
-  emptyText: {
-    color: "gray",
-    textAlign: "center"
+  summaryCard: {
+    backgroundColor: "#1e293b",
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20
   },
 
-  itemRow: {
+  summaryTitle: {
+    color: "#38bdf8",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 8
+  },
+
+  summaryItem: {
+    color: "white",
+    fontSize: 14
+  },
+
+  expenseCard: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#1e293b",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 10
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 3
+  },
+
+  actions: {
+    flexDirection: "row",
+    gap: 10
+  },
+
+  editBtn: {
+    backgroundColor: "#f59e0b",
+    padding: 10,
+    borderRadius: 8
+  },
+
+  deleteBtn: {
+    backgroundColor: "#ef4444",
+    padding: 10,
+    borderRadius: 8
+  },
+
+  btnText: {
+    color: "white"
   },
 
   amount: {
@@ -306,23 +343,9 @@ const styles = StyleSheet.create({
     fontSize: 12
   },
 
-  summaryCard: {
-    backgroundColor: "#1e293b",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 20
-  },
-
-  summaryTitle: {
-    color: "#38bdf8",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 8
-  },
-
-  summaryItem: {
-    color: "white",
-    fontSize: 14
+  emptyText: {
+    color: "gray",
+    textAlign: "center"
   }
 
 });
