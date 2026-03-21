@@ -20,10 +20,10 @@ export default function HomeScreen() {
   // -------------------------------
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
-  const [note, setNote] = useState("");                 // 🆕 optional note
+  const [note, setNote] = useState("");
   const [date, setDate] = useState(
     new Date().toISOString().split("T")[0]
-  );                                                   // 🆕 date
+  );
   const [expenses, setExpenses] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
@@ -51,6 +51,15 @@ export default function HomeScreen() {
   }, [expenses]);
 
   // -------------------------------
+  // CATEGORY SUMMARY LOGIC
+  // -------------------------------
+  const categoryTotals = expenses.reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = 0;
+    acc[item.category] += item.amount;
+    return acc;
+  }, {});
+
+  // -------------------------------
   // ADD / EDIT
   // -------------------------------
   const addExpense = () => {
@@ -66,7 +75,6 @@ export default function HomeScreen() {
     }
 
     if (editingId) {
-      // ✏️ EDIT
       const updated = expenses.map(item =>
         item.id === editingId
           ? { ...item, amount: parseFloat(amount), category, note, date }
@@ -76,7 +84,6 @@ export default function HomeScreen() {
       setEditingId(null);
 
     } else {
-      // ➕ ADD
       const newExpense = {
         id: Date.now().toString(),
         amount: parseFloat(amount),
@@ -87,7 +94,6 @@ export default function HomeScreen() {
       setExpenses([...expenses, newExpense]);
     }
 
-    // Clear inputs
     setAmount("");
     setCategory("");
     setNote("");
@@ -105,26 +111,7 @@ export default function HomeScreen() {
   // TOTAL
   // -------------------------------
   const total = expenses.reduce((sum, item) => sum + item.amount, 0);
-  {/* CATEGORY SUMMARY */ }
-  <View style={styles.summaryCard}>
-    <Text style={styles.summaryTitle}>📊 Category Summary</Text>
 
-    {Object.keys(categoryTotals).map((key) => (
-      <Text key={key} style={styles.summaryItem}>
-        {key}: ₹{categoryTotals[key]}
-      </Text>
-    ))}
-  </View>
-  // -------------------------------
-  // CATEGORY SUMMARY (Dashboard Logic)
-  // -------------------------------
-  const categoryTotals = expenses.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = 0;
-    }
-    acc[item.category] += item.amount;
-    return acc;
-  }, {});
   // ================================
   // UI
   // ================================
@@ -178,6 +165,17 @@ export default function HomeScreen() {
 
       {/* TOTAL */}
       <Text style={styles.total}>Total: ₹{total}</Text>
+
+      {/* CATEGORY SUMMARY */}
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryTitle}>📊 Category Summary</Text>
+
+        {Object.keys(categoryTotals).map((key) => (
+          <Text key={key} style={styles.summaryItem}>
+            {key}: ₹{categoryTotals[key]}
+          </Text>
+        ))}
+      </View>
 
       {/* EMPTY */}
       {expenses.length === 0 && (
@@ -306,7 +304,7 @@ const styles = StyleSheet.create({
   date: {
     color: "#94a3b8",
     fontSize: 12
-  }
+  },
 
   summaryCard: {
     backgroundColor: "#1e293b",
@@ -325,6 +323,6 @@ const styles = StyleSheet.create({
   summaryItem: {
     color: "white",
     fontSize: 14
-  },
+  }
 
 });
