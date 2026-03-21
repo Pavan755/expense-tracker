@@ -7,7 +7,8 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Dimensions
+  Dimensions,
+  Modal
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PieChart } from "react-native-chart-kit";
@@ -20,6 +21,11 @@ export default function HomeScreen() {
   const [category, setCategory] = useState("");
   const [note, setNote] = useState("");
   const [expenses, setExpenses] = useState([]);
+
+  // NEW STATES
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
 
   // LOAD
   useEffect(() => {
@@ -45,7 +51,6 @@ export default function HomeScreen() {
     };
 
     setExpenses([...expenses, newExpense]);
-
     setAmount("");
     setCategory("");
     setNote("");
@@ -56,11 +61,20 @@ export default function HomeScreen() {
     setExpenses(expenses.filter(e => e.id !== id));
   };
 
+  // EDIT SAVE
+  const saveEdit = () => {
+    const updated = expenses.map(e =>
+      e.id === editingExpense.id ? editingExpense : e
+    );
+    setExpenses(updated);
+    setModalVisible(false);
+  };
+
   // TOTAL
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  // CATEGORY SUMMARY
-  const categoryTotals: any = {};
+  // CATEGORY TOTALS
+  const categoryTotals = {};
   expenses.forEach(e => {
     if (!categoryTotals[e.category]) categoryTotals[e.category] = 0;
     categoryTotals[e.category] += e.amount;
@@ -76,121 +90,142 @@ export default function HomeScreen() {
     legendFontSize: 12
   }));
 
+  // FILTER LOGIC
+  const filteredExpenses =
+    selectedFilter === "All"
+      ? expenses
+      : expenses.filter(e => e.category === selectedFilter);
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
 
       {/* HEADER */}
       <View style={styles.headerRow}>
-        <View>
-          <Text style={styles.welcome}>Welcome 👋</Text>
-          <Text style={styles.username}>Pravallika</Text>
-        </View>
-
-        <View style={styles.avatar}>
-          <Text>👩</Text>
-        </View>
+        <Text style={styles.username}>Dashboard</Text>
       </View>
 
-      {/* TOTAL CARD */}
+      {/* TOTAL */}
       <View style={styles.totalCard}>
-        <Text style={styles.totalLabel}>Total Balance</Text>
         <Text style={styles.totalText}>₹{total}</Text>
       </View>
 
-      {/* CATEGORY CARDS */}
-      <Text style={styles.sectionTitle}>Categories</Text>
-
+      {/* CATEGORY FILTERS */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {Object.keys(categoryTotals).map((key, index) => (
-          <View key={key} style={styles.categoryCard}>
-            <View style={[styles.colorDot, { backgroundColor: colors[index % colors.length] }]} />
-            <Text style={styles.categoryName}>{key}</Text>
-            <Text style={styles.categoryAmount}>₹{categoryTotals[key]}</Text>
-          </View>
+        <TouchableOpacity
+          style={[styles.filterBtn, selectedFilter === "All" && styles.activeFilter]}
+          onPress={() => setSelectedFilter("All")}
+        >
+          <Text style={styles.filterText}>All</Text>
+        </TouchableOpacity>
+
+        {Object.keys(categoryTotals).map(cat => (
+          <TouchableOpacity
+            key={cat}
+            style={[styles.filterBtn, selectedFilter === cat && styles.activeFilter]}
+            onPress={() => setSelectedFilter(cat)}
+          >
+            <Text style={styles.filterText}>{cat}</Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
 
       {/* PIE CHART */}
       {chartData.length > 0 && (
-        <View style={styles.chartCard}>
-          <Text style={styles.sectionTitle}>Spending Breakdown</Text>
-
-          <PieChart
-            data={chartData}
-            width={screenWidth - 40}
-            height={180}
-            chartConfig={{ color: () => `white` }}
-            accessor={"amount"}
-            backgroundColor={"transparent"}
-            paddingLeft={"10"}
-            absolute
-          />
-        </View>
+        <PieChart
+          data={chartData}
+          width={screenWidth - 40}
+          height={180}
+          chartConfig={{ color: () => `white` }}
+          accessor={"amount"}
+          backgroundColor={"transparent"}
+          paddingLeft={"10"}
+          absolute
+        />
       )}
 
-      {/* INPUT */}
+      {/* ADD */}
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Add Expense</Text>
-
-        <TextInput
-          placeholder="Amount"
-          value={amount}
-          onChangeText={setAmount}
-          style={styles.input}
-          placeholderTextColor="#94a3b8"
-          keyboardType="numeric"
-        />
-
-        <TextInput
-          placeholder="Category"
-          value={category}
-          onChangeText={setCategory}
-          style={styles.input}
-          placeholderTextColor="#94a3b8"
-        />
-
-        <TextInput
-          placeholder="Note"
-          value={note}
-          onChangeText={setNote}
-          style={styles.input}
-          placeholderTextColor="#94a3b8"
-        />
+        <TextInput placeholder="Amount" value={amount} onChangeText={setAmount} style={styles.input} />
+        <TextInput placeholder="Category" value={category} onChangeText={setCategory} style={styles.input} />
+        <TextInput placeholder="Note" value={note} onChangeText={setNote} style={styles.input} />
 
         <TouchableOpacity style={styles.addBtn} onPress={addExpense}>
-          <Text style={styles.btnText}>+ ADD EXPENSE</Text>
+          <Text style={styles.btnText}>Add</Text>
         </TouchableOpacity>
       </View>
 
       {/* LIST */}
-      <Text style={styles.sectionTitle}>Recent Expenses</Text>
-
       <FlatList
-        data={expenses}
+        data={filteredExpenses}
         keyExtractor={(item) => item.id}
         scrollEnabled={false}
         renderItem={({ item }) => (
           <View style={styles.itemCard}>
+
             <View>
               <Text style={styles.amount}>₹{item.amount}</Text>
               <Text style={styles.category}>{item.category}</Text>
-              {item.note && <Text style={styles.note}>{item.note}</Text>}
             </View>
 
-            <TouchableOpacity
-              style={styles.deleteBtn}
-              onPress={() => deleteExpense(item.id)}
-            >
-              <Text style={{ color: "white" }}>✕</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+
+              <TouchableOpacity
+                style={styles.editBtn}
+                onPress={() => {
+                  setEditingExpense(item);
+                  setModalVisible(true);
+                }}
+              >
+                <Text>✏️</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => deleteExpense(item.id)}
+              >
+                <Text style={{ color: "white" }}>✕</Text>
+              </TouchableOpacity>
+
+            </View>
+
           </View>
         )}
       />
+
+      {/* MODAL */}
+      <Modal visible={modalVisible} transparent>
+        <View style={styles.modalBg}>
+          <View style={styles.modalCard}>
+
+            <TextInput
+              value={editingExpense?.amount.toString()}
+              onChangeText={(val) =>
+                setEditingExpense({ ...editingExpense, amount: parseFloat(val) })
+              }
+              style={styles.input}
+            />
+
+            <TextInput
+              value={editingExpense?.category}
+              onChangeText={(val) =>
+                setEditingExpense({ ...editingExpense, category: val })
+              }
+              style={styles.input}
+            />
+
+            <TouchableOpacity style={styles.addBtn} onPress={saveEdit}>
+              <Text style={styles.btnText}>Save</Text>
+            </TouchableOpacity>
+
+          </View>
+        </View>
+      </Modal>
 
     </ScrollView>
   );
 }
 
+// ================= STYLES =================
 const styles = StyleSheet.create({
 
   container: {
@@ -199,101 +234,48 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f172a"
   },
 
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20
-  },
-
-  welcome: {
-    color: "#94a3b8"
-  },
-
   username: {
     color: "white",
     fontSize: 20,
     fontWeight: "bold"
   },
 
-  avatar: {
-    backgroundColor: "#facc15",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center"
-  },
-
   totalCard: {
     backgroundColor: "#1e293b",
     padding: 20,
-    borderRadius: 15,
-    alignItems: "center",
-    marginBottom: 15
-  },
-
-  totalLabel: {
-    color: "#94a3b8"
-  },
-
-  totalText: {
-    color: "#facc15",
-    fontSize: 26,
-    fontWeight: "bold"
-  },
-
-  sectionTitle: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginVertical: 10
-  },
-
-  // CATEGORY CARDS
-  categoryCard: {
-    backgroundColor: "#1e293b",
-    padding: 15,
-    borderRadius: 12,
-    marginRight: 10,
-    width: 120
-  },
-
-  categoryName: {
-    color: "#94a3b8"
-  },
-
-  categoryAmount: {
-    color: "white",
-    fontWeight: "bold",
-    marginTop: 5
-  },
-
-  colorDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginBottom: 8
-  },
-
-  chartCard: {
-    backgroundColor: "#1e293b",
-    padding: 15,
     borderRadius: 12,
     marginVertical: 10,
     alignItems: "center"
   },
 
-  card: {
+  totalText: {
+    color: "#facc15",
+    fontSize: 24,
+    fontWeight: "bold"
+  },
+
+  filterBtn: {
     backgroundColor: "#1e293b",
-    padding: 15,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 8,
+    marginRight: 8
+  },
+
+  activeFilter: {
+    backgroundColor: "#38bdf8"
+  },
+
+  filterText: {
+    color: "white"
+  },
+
+  card: {
     marginVertical: 15
   },
 
   input: {
     backgroundColor: "#334155",
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
     marginBottom: 10,
     color: "white"
@@ -301,21 +283,20 @@ const styles = StyleSheet.create({
 
   addBtn: {
     backgroundColor: "#38bdf8",
-    padding: 14,
-    borderRadius: 10,
+    padding: 12,
+    borderRadius: 8,
     alignItems: "center"
   },
 
   btnText: {
-    color: "white",
-    fontWeight: "bold"
+    color: "white"
   },
 
   itemCard: {
     backgroundColor: "#1e293b",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between"
   },
@@ -329,15 +310,29 @@ const styles = StyleSheet.create({
     color: "#94a3b8"
   },
 
-  note: {
-    color: "#cbd5f5",
-    fontSize: 12
+  editBtn: {
+    backgroundColor: "#facc15",
+    padding: 8,
+    borderRadius: 6
   },
 
   deleteBtn: {
     backgroundColor: "#ef4444",
-    padding: 10,
-    borderRadius: 8
+    padding: 8,
+    borderRadius: 6
+  },
+
+  modalBg: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.5)"
+  },
+
+  modalCard: {
+    backgroundColor: "#1e293b",
+    margin: 20,
+    padding: 20,
+    borderRadius: 12
   }
 
 });
