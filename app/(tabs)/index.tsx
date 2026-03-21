@@ -105,7 +105,26 @@ export default function HomeScreen() {
   // TOTAL
   // -------------------------------
   const total = expenses.reduce((sum, item) => sum + item.amount, 0);
+  {/* CATEGORY SUMMARY */ }
+  <View style={styles.summaryCard}>
+    <Text style={styles.summaryTitle}>📊 Category Summary</Text>
 
+    {Object.keys(categoryTotals).map((key) => (
+      <Text key={key} style={styles.summaryItem}>
+        {key}: ₹{categoryTotals[key]}
+      </Text>
+    ))}
+  </View>
+  // -------------------------------
+  // CATEGORY SUMMARY (Dashboard Logic)
+  // -------------------------------
+  const categoryTotals = expenses.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = 0;
+    }
+    acc[item.category] += item.amount;
+    return acc;
+  }, {});
   // ================================
   // UI
   // ================================
@@ -288,5 +307,24 @@ const styles = StyleSheet.create({
     color: "#94a3b8",
     fontSize: 12
   }
+
+  summaryCard: {
+    backgroundColor: "#1e293b",
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20
+  },
+
+  summaryTitle: {
+    color: "#38bdf8",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 8
+  },
+
+  summaryItem: {
+    color: "white",
+    fontSize: 14
+  },
 
 });
