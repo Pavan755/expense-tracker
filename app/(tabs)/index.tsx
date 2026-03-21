@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import {
-  ScrollView, 
+  View,
+  ScrollView,
   Text,
   TextInput,
   FlatList,
@@ -20,18 +21,19 @@ export default function HomeScreen() {
   const [note, setNote] = useState("");
   const [expenses, setExpenses] = useState([]);
 
-  // ================= LOAD =================
+  // LOAD
   useEffect(() => {
     AsyncStorage.getItem("expenses").then(data => {
       if (data) setExpenses(JSON.parse(data));
     });
   }, []);
 
+  // SAVE
   useEffect(() => {
     AsyncStorage.setItem("expenses", JSON.stringify(expenses));
   }, [expenses]);
 
-  // ================= ADD =================
+  // ADD
   const addExpense = () => {
     if (!amount || !category) return;
 
@@ -43,71 +45,102 @@ export default function HomeScreen() {
     };
 
     setExpenses([...expenses, newExpense]);
+
     setAmount("");
     setCategory("");
     setNote("");
   };
 
-  // ================= DELETE =================
+  // DELETE
   const deleteExpense = (id) => {
     setExpenses(expenses.filter(e => e.id !== id));
   };
 
-  // ================= TOTAL =================
+  // TOTAL
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  // ================= CATEGORY DATA =================
-  const categoryTotals = {};
+  // CATEGORY SUMMARY
+  const categoryTotals: any = {};
   expenses.forEach(e => {
     if (!categoryTotals[e.category]) categoryTotals[e.category] = 0;
     categoryTotals[e.category] += e.amount;
   });
 
+  const colors = ["#facc15", "#38bdf8", "#4ade80", "#fb7185"];
+
   const chartData = Object.keys(categoryTotals).map((key, index) => ({
     name: key,
     amount: categoryTotals[key],
-    color: ["#facc15", "#38bdf8", "#4ade80", "#fb7185"][index % 4],
+    color: colors[index % colors.length],
     legendFontColor: "white",
     legendFontSize: 12
   }));
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
 
       {/* HEADER */}
-      <Text style={styles.header}>💰 Expense Dashboard</Text>
+      <View style={styles.headerRow}>
+        <View>
+          <Text style={styles.welcome}>Welcome 👋</Text>
+          <Text style={styles.username}>Pravallika</Text>
+        </View>
+
+        <View style={styles.avatar}>
+          <Text>👩</Text>
+        </View>
+      </View>
 
       {/* TOTAL CARD */}
       <View style={styles.totalCard}>
+        <Text style={styles.totalLabel}>Total Balance</Text>
         <Text style={styles.totalText}>₹{total}</Text>
-        <Text style={styles.subText}>Total Spent</Text>
+      </View>
+
+      {/* CATEGORY CARDS */}
+      <Text style={styles.sectionTitle}>Categories</Text>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {Object.keys(categoryTotals).map((key, index) => (
+          <View key={key} style={styles.categoryCard}>
+            <View style={[styles.colorDot, { backgroundColor: colors[index % colors.length] }]} />
+            <Text style={styles.categoryName}>{key}</Text>
+            <Text style={styles.categoryAmount}>₹{categoryTotals[key]}</Text>
+          </View>
+        ))}
       </ScrollView>
 
       {/* PIE CHART */}
       {chartData.length > 0 && (
-        <PieChart
-          data={chartData}
-          width={screenWidth - 40}
-          height={180}
-          chartConfig={{
-            color: () => `white`
-          }}
-          accessor={"amount"}
-          backgroundColor={"transparent"}
-          paddingLeft={"15"}
-          absolute
-        />
+        <View style={styles.chartCard}>
+          <Text style={styles.sectionTitle}>Spending Breakdown</Text>
+
+          <PieChart
+            data={chartData}
+            width={screenWidth - 40}
+            height={180}
+            chartConfig={{ color: () => `white` }}
+            accessor={"amount"}
+            backgroundColor={"transparent"}
+            paddingLeft={"10"}
+            absolute
+          />
+        </View>
       )}
 
-      {/* INPUT CARD */}
+      {/* INPUT */}
       <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Add Expense</Text>
+
         <TextInput
           placeholder="Amount"
           value={amount}
           onChangeText={setAmount}
           style={styles.input}
           placeholderTextColor="#94a3b8"
+          keyboardType="numeric"
         />
+
         <TextInput
           placeholder="Category"
           value={category}
@@ -115,6 +148,7 @@ export default function HomeScreen() {
           style={styles.input}
           placeholderTextColor="#94a3b8"
         />
+
         <TextInput
           placeholder="Note"
           value={note}
@@ -124,17 +158,19 @@ export default function HomeScreen() {
         />
 
         <TouchableOpacity style={styles.addBtn} onPress={addExpense}>
-          <Text style={styles.btnText}>ADD EXPENSE</Text>
+          <Text style={styles.btnText}>+ ADD EXPENSE</Text>
         </TouchableOpacity>
       </View>
 
       {/* LIST */}
+      <Text style={styles.sectionTitle}>Recent Expenses</Text>
+
       <FlatList
         data={expenses}
         keyExtractor={(item) => item.id}
+        scrollEnabled={false}
         renderItem={({ item }) => (
           <View style={styles.itemCard}>
-
             <View>
               <Text style={styles.amount}>₹{item.amount}</Text>
               <Text style={styles.category}>{item.category}</Text>
@@ -145,18 +181,16 @@ export default function HomeScreen() {
               style={styles.deleteBtn}
               onPress={() => deleteExpense(item.id)}
             >
-              <Text style={{ color: "white" }}>❌</Text>
+              <Text style={{ color: "white" }}>✕</Text>
             </TouchableOpacity>
-
           </View>
         )}
       />
 
-    </View>
+    </ScrollView>
   );
 }
 
-// ================= STYLES =================
 const styles = StyleSheet.create({
 
   container: {
@@ -165,11 +199,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f172a"
   },
 
-  header: {
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20
+  },
+
+  welcome: {
+    color: "#94a3b8"
+  },
+
+  username: {
     color: "white",
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 15
+    fontSize: 20,
+    fontWeight: "bold"
+  },
+
+  avatar: {
+    backgroundColor: "#facc15",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center"
   },
 
   totalCard: {
@@ -180,14 +233,55 @@ const styles = StyleSheet.create({
     marginBottom: 15
   },
 
+  totalLabel: {
+    color: "#94a3b8"
+  },
+
   totalText: {
     color: "#facc15",
     fontSize: 26,
     fontWeight: "bold"
   },
 
-  subText: {
+  sectionTitle: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginVertical: 10
+  },
+
+  // CATEGORY CARDS
+  categoryCard: {
+    backgroundColor: "#1e293b",
+    padding: 15,
+    borderRadius: 12,
+    marginRight: 10,
+    width: 120
+  },
+
+  categoryName: {
     color: "#94a3b8"
+  },
+
+  categoryAmount: {
+    color: "white",
+    fontWeight: "bold",
+    marginTop: 5
+  },
+
+  colorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginBottom: 8
+  },
+
+  chartCard: {
+    backgroundColor: "#1e293b",
+    padding: 15,
+    borderRadius: 12,
+    marginVertical: 10,
+    alignItems: "center"
   },
 
   card: {
@@ -221,7 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e293b",
     padding: 15,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 12,
     flexDirection: "row",
     justifyContent: "space-between"
   },
