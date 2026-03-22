@@ -1,50 +1,113 @@
-# Welcome to your Expo app 👋
+# 💰 Expense Tracker App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 🚀 Project Overview
 
-## Get started
+This is a mobile Expense Tracker application built using React Native (Expo).  
+The app allows users to manage daily expenses with a modern UI, category insights, and interactive visualizations.
 
-1. Install dependencies
+This project was developed as part of a learning and evaluation process where I focused on both functionality and user experience.
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## ✨ Features Implemented
 
-   ```bash
-   npx expo start
-   ```
+- Add new expenses (amount, category, optional note)
+- Edit existing expenses using a modal popup
+- Delete expenses
+- Category-based filtering (All / specific categories)
+- Dashboard with total balance
+- Category summary cards (horizontal scroll)
+- Pie chart for expense distribution
+- Persistent storage using AsyncStorage
+- Clean and modern fintech-style UI
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 🧠 Development Approach
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Since I am still building my familiarity with this tech stack, I approached the project step-by-step:
 
-## Get a fresh project
+1. Started with basic expense addition
+2. Implemented local storage using AsyncStorage
+3. Added delete functionality
+4. Implemented edit feature using modal
+5. Built dashboard (total + category breakdown)
+6. Integrated pie chart visualization
+7. Improved UI progressively to match modern design patterns
+8. Added filters and improved user experience
 
-When you're ready, run:
+---
 
+## ⚠️ Challenges Faced & How I Solved Them
+
+### 1. UI Rendering Errors
+- Faced issues like:
+  - JSX syntax errors
+  - Incorrect component placem# 💰 Expense Tracker App
+
+## 🚀 Project Overview
+
+This is a mobile Expense Tracker application built using React Native (Expo).  
+The app allows users to manage daily expenses with a modern UI, category insights, and interactive visualizations.
+
+This project was developed as part of a learning and evaluation process where I focused on both functionality and user experience.
+
+---
+
+## ✨ Features Implemented
+
+- Add new expenses (amount, category, optional note)
+- Edit existing expenses using a modal popup
+- Delete expenses
+- Category-based filtering (All / specific categories)
+- Dashboard with total balance
+- Category summary cards (horizontal scroll)
+- Pie chart for expense distribution
+- Persistent storage using AsyncStorage
+- Clean and modern fintech-style UI
+
+---
+
+## 🧠 Development Approach
+
+Since I am still building my familiarity with this tech stack, I approached the project step-by-step:
+
+1. Started with basic expense addition
+2. Implemented local storage using AsyncStorage
+3. Added delete functionality
+4. Implemented edit feature using modal
+5. Built dashboard (total + category breakdown)
+6. Integrated pie chart visualization
+7. Improved UI progressively to match modern design patterns
+8. Added filters and improved user experience
+
+---
+
+## ⚠️ Challenges Faced & How I Solved Them
+
+### 1. UI Rendering Errors
+- Faced issues like:
+  - JSX syntax errors
+  - Incorrect component placement
+- Solution:
+  - Carefully debugged structure
+  - Learned proper React Native layout flow
+
+---
+
+### 2. Chart Library Errors
+- Faced dependency issue (`lodash missing`)
+- Solution:
 ```bash
-npm run reset-project
-```
+npm install lodashent
+- Solution:
+  - Carefully debugged structure
+  - Learned proper React Native layout flow
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 2. Chart Library Errors
+- Faced dependency issue (`lodash missing`)
+- Solution:
+```bash
+npm install lodash
