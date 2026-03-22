@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 import {
-  View,
+  Dimensions,
+  FlatList,
+  Modal,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  FlatList,
-  StyleSheet,
   TouchableOpacity,
-  Dimensions,
-  Modal
+  View
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PieChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
