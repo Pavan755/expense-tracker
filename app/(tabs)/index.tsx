@@ -15,22 +15,38 @@ import { PieChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
 
+type Expense = {
+  id: string;
+  amount: number;
+  category: string;
+  note: string;
+};
+
 export default function HomeScreen() {
 
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [note, setNote] = useState("");
-  const [expenses, setExpenses] = useState([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
   // NEW STATES
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingExpense, setEditingExpense] = useState(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   // LOAD
   useEffect(() => {
     AsyncStorage.getItem("expenses").then(data => {
-      if (data) setExpenses(JSON.parse(data));
+      if (!data) return;
+
+      try {
+        const parsed = JSON.parse(data) as Expense[];
+        if (Array.isArray(parsed)) {
+          setExpenses(parsed);
+        }
+      } catch {
+        setExpenses([]);
+      }
     });
   }, []);
 
@@ -43,9 +59,12 @@ export default function HomeScreen() {
   const addExpense = () => {
     if (!amount || !category) return;
 
-    const newExpense = {
+    const parsedAmount = parseFloat(amount);
+    if (Number.isNaN(parsedAmount)) return;
+
+    const newExpense: Expense = {
       id: Date.now().toString(),
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       category,
       note
     };
@@ -57,24 +76,27 @@ export default function HomeScreen() {
   };
 
   // DELETE
-  const deleteExpense = (id) => {
+  const deleteExpense = (id: string) => {
     setExpenses(expenses.filter(e => e.id !== id));
   };
 
   // EDIT SAVE
   const saveEdit = () => {
+    if (!editingExpense) return;
+
     const updated = expenses.map(e =>
       e.id === editingExpense.id ? editingExpense : e
     );
     setExpenses(updated);
     setModalVisible(false);
+    setEditingExpense(null);
   };
 
   // TOTAL
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   // CATEGORY TOTALS
-  const categoryTotals = {};
+  const categoryTotals: Record<string, number> = {};
   expenses.forEach(e => {
     if (!categoryTotals[e.category]) categoryTotals[e.category] = 0;
     categoryTotals[e.category] += e.amount;
@@ -198,18 +220,25 @@ export default function HomeScreen() {
           <View style={styles.modalCard}>
 
             <TextInput
-              value={editingExpense?.amount.toString()}
-              onChangeText={(val) =>
-                setEditingExpense({ ...editingExpense, amount: parseFloat(val) })
-              }
+              value={editingExpense ? editingExpense.amount.toString() : ""}
+              onChangeText={(val) => {
+                const parsedAmount = parseFloat(val);
+                setEditingExpense(current => {
+                  if (!current || Number.isNaN(parsedAmount)) return current;
+                  return { ...current, amount: parsedAmount };
+                });
+              }}
               style={styles.input}
             />
 
             <TextInput
-              value={editingExpense?.category}
-              onChangeText={(val) =>
-                setEditingExpense({ ...editingExpense, category: val })
-              }
+              value={editingExpense?.category ?? ""}
+              onChangeText={(val) => {
+                setEditingExpense(current => {
+                  if (!current) return current;
+                  return { ...current, category: val };
+                });
+              }}
               style={styles.input}
             />
 
@@ -232,6 +261,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#0f172a"
+  },
+
+  headerRow: {
+    marginBottom: 8
   },
 
   username: {

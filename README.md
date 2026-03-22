@@ -72,7 +72,36 @@ From the Expo CLI menu:
 - `npm run ios` - start and open iOS target
 - `npm run web` - start and open web target
 - `npm run lint` - run Expo ESLint checks
+- `npm run build:web` - export static web build to `dist/`
 - `npm run reset-project` - reset template scaffold (use with care)
+
+## Deploy to GitHub Pages
+
+This project includes an automated GitHub Actions workflow at
+`.github/workflows/deploy-pages.yml`.
+
+### One-time GitHub setup
+
+1. Push this repository to GitHub.
+2. Open repository settings on GitHub.
+3. Go to **Pages** and set **Source** to **GitHub Actions**.
+4. Ensure your default branch is `main` (or update the workflow trigger branch).
+
+### Deployment flow
+
+1. Push to `main`.
+2. GitHub Actions exports Expo web using the repository name as base path.
+3. The workflow publishes `dist/` to GitHub Pages.
+
+After deployment, your site URL is typically:
+
+`https://<your-github-username>.github.io/<your-repo-name>/`
+
+### Local production build check
+
+```bash
+npm run build:web
+```
 
 ## Data Model (Current)
 
